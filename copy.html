@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Copy Prompt</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:system-ui,Arial,sans-serif;max-width:720px;margin:4rem auto;padding:0 1rem}
+  h1{font-size:1.4rem;margin-bottom:.5rem}
+  button{font-size:1.1rem;padding:.8rem 1.1rem;cursor:pointer}
+  #status{margin-top:.6rem}
+  details{margin-top:1rem}
+  textarea{width:100%;height:12rem;margin-top:.5rem}
+</style>
+
+<h1>Copy your prompt</h1>
+<p>Click the button, then paste (Ctrl/⌘+V) into your AI.</p>
+<button id="copyBtn" disabled>Loading…</button>
+<div id="status" aria-live="polite"></div>
+
+<details open>
+  <summary>Prompt preview</summary>
+  <textarea id="preview" readonly>Loading…</textarea>
+</details>
+
+<script>
+  const RAW_URL = "https://raw.githubusercontent.com/johanel-pages/canvas-copy-helper/main/prompt.md";
+
+  const btn = document.getElementById('copyBtn');
+  const preview = document.getElementById('preview');
+  let txt = '';
+
+  async function loadPrompt(){
+    const r = await fetch(RAW_URL, {mode:'cors', cache:'no-store'});
+    if(!r.ok) throw new Error('Could not load prompt.md');
+    txt = await r.text();
+    preview.value = txt;
+    btn.textContent = 'Copy prompt';
+    btn.disabled = false;
+  }
+
+  async function copyText(t){
+    try{
+      await navigator.clipboard.writeText(t);
+      return true;
+    }catch{
+      preview.focus(); preview.select();
+      try { return document.execCommand && document.execCommand('copy'); }
+      catch { return false; }
+    }
+  }
+
+  btn.addEventListener('click', async () => {
+    const ok = await copyText(txt);
+    document.getElementById('status').textContent =
+      ok ? '✅ Copied! Now paste (Ctrl/⌘+V) in your AI.'
+         : '⚠️ If it didn’t auto-copy, press Ctrl/⌘+C, then paste.';
+  });
+
+  loadPrompt().catch(e => {
+    preview.value = 'Error loading prompt. Please try again later.';
+  });
+</script>
